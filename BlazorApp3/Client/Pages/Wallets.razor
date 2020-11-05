@@ -1,0 +1,85 @@
+﻿@page "/wallets"
+@using BlazorApp3.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@attribute [Authorize]
+@inject HttpClient HttpClient
+
+<style>
+    .wallet {
+        width: 250px;
+        border: 1px solid #555;
+        border-radius: 5px;
+        margin: 10px;
+        padding: 10px;
+    }
+</style>
+
+<h3>Wallets</h3>
+
+@if (WalletList == null || WalletList.Count == 0)
+{
+    <div>Loading...</div>
+}
+else
+{
+    @foreach (var wallet in WalletList)
+    {
+        <div class="wallet">
+            <div>Wallet @wallet.Id</div>
+            <div>
+                <span>@wallet.Amount</span>
+                <span>@wallet.Currency</span>
+            </div>
+        </div>
+    }
+}
+
+<div>
+    <h3>Create a new wallet</h3>
+    <input type="text" placeholder="Currency" @bind="Currency" />
+    <button @onclick="() => CreateWallet()">Create wallet</button>
+</div>
+
+@code {
+    private List<Wallet> WalletList;
+    private string Currency;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            WalletList = await HttpClient.GetFromJsonAsync<List<Wallet>>("api/wallet");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async Task CreateWallet()
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(Currency))
+                return;
+
+            var response = await HttpClient.PostAsync("api/wallet?currency=" + Currency, null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var newWallet = new Wallet
+                {
+                    Id = Guid.NewGuid(),
+                    Amount = 0,
+                    Currency = Currency
+                };
+                WalletList.Add(newWallet);
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}
