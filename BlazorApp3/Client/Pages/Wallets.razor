@@ -4,6 +4,7 @@
 @using Microsoft.AspNetCore.Components.WebAssembly.Authentication
 @attribute [Authorize]
 @inject HttpClient HttpClient
+@inject NavigationManager navManager
 
 <style>
     .wallet {
@@ -33,6 +34,7 @@ else
             </div>
             <div>
                 <button @onclick="() => DeleteWallet(wallet.Id)">Delete wallet</button>
+                <button @onclick="() => MakeTransfer(wallet.Id)">Make transfer</button>
             </div>
         </div>
     }
@@ -91,6 +93,18 @@ else
         {
             await HttpClient.DeleteAsync("api/wallet/" + id);
             await LoadWallets();
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async Task MakeTransfer(Guid id)
+    {
+        try
+        {
+            navManager.NavigateTo($"transfer/{id}");
         }
         catch (AccessTokenNotAvailableException exception)
         {
