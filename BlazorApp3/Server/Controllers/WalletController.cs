@@ -57,5 +57,24 @@ namespace BlazorApp3.Server.Controllers
 
             return Ok();
         }
+
+        [HttpDelete]
+        [Route("{id}")]
+        public IActionResult DeleteWallet([FromRoute] Guid id)
+        {
+            var userId = userManager.GetUserId(User);
+            var user = context.Users.Include(x => x.Wallets).FirstOrDefault(x => x.Id == userId);
+
+            if (!user.Wallets.Any(x => x.Id == id))
+            {
+                return BadRequest();
+            }
+
+            var wallet = context.Wallets.Find(id);
+            context.Wallets.Remove(wallet);
+            context.SaveChanges();
+
+            return Ok();
+        }
     }
 }

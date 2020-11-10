@@ -31,6 +31,9 @@ else
                 <span>@wallet.Amount</span>
                 <span>@wallet.Currency</span>
             </div>
+            <div>
+                <button @onclick="() => DeleteWallet(wallet.Id)">Delete wallet</button>
+            </div>
         </div>
     }
 }
@@ -46,6 +49,11 @@ else
     private string Currency;
 
     protected override async Task OnInitializedAsync()
+    {
+        await LoadWallets();
+    }
+
+    private async Task LoadWallets()
     {
         try
         {
@@ -68,14 +76,21 @@ else
 
             if (response.IsSuccessStatusCode)
             {
-                var newWallet = new Wallet
-                {
-                    Id = Guid.NewGuid(),
-                    Amount = 0,
-                    Currency = Currency
-                };
-                WalletList.Add(newWallet);
+                await LoadWallets();
             }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async Task DeleteWallet(Guid id)
+    {
+        try
+        {
+            await HttpClient.DeleteAsync("api/wallet/" + id);
+            await LoadWallets();
         }
         catch (AccessTokenNotAvailableException exception)
         {
