@@ -1,0 +1,74 @@
+﻿@page "/transfer/{sourceWalletId}"
+@using BlazorApp3.Shared
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@attribute [Authorize]
+@inject HttpClient HttpClient
+@inject NavigationManager navManager
+
+<h3>Transfer</h3>
+
+@if (wallet == null)
+{
+    <div>Loading...</div>
+}
+else
+{
+    <div class="card" style="width: 18rem;">
+        <div class="card-body">
+            <h5 class="card-title">Wallet @wallet.Id</h5>
+            <p class="card-text">Amount: @wallet.Amount @wallet.Currency</p>
+            <p>
+                Amount:<br />
+                <input @bind="transferData.Amount" />
+            </p>
+            <p>
+                Username:<br />
+                <input @bind="transferData.Username" />
+            </p>
+            <button class="btn btn-primary" @onclick="MakeTransfer">Transfer</button>
+        </div>
+    </div>
+}
+
+
+@code {
+    [Parameter]
+    public string SourceWalletId { get; set; }
+
+    public Wallet wallet { get; set; }
+
+    public TransferDto transferData { get; set; } = new TransferDto();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            wallet = await HttpClient.GetFromJsonAsync<Wallet>($"api/wallet/{SourceWalletId}");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+
+    }
+
+    private async Task MakeTransfer()
+    {
+        try
+        {
+            transferData.SourceWalletId = SourceWalletId;
+            transferData.Currency = wallet.Currency;
+            var response = await HttpClient.PostAsJsonAsync($"api/wallet/transfer", transferData);
+            if (response.IsSuccessStatusCode)
+            {
+                navManager.NavigateTo("wallets");
+            }
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}
