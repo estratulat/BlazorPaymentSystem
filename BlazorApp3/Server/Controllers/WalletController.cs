@@ -2,7 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using BlazorApp3.Server.Data;
+using BlazorApp3.Server.Helpers;
 using BlazorApp3.Server.Models;
 using BlazorApp3.Shared;
 using Microsoft.AspNetCore.Authorization;
@@ -147,6 +149,48 @@ namespace BlazorApp3.Server.Controllers
             context.SaveChanges();
 
             return Ok();
+        }
+
+        [HttpGet]
+        [Route("transfers/{itemsPerPage}/{pageNumber}")]
+        public TransactionsHistoryData GetTransactions(int itemsPerPage, int pageNumber, [FromQuery] Direction direction)
+        {
+            var userId = userManager.GetUserId(User);
+
+            var walletIds = context.Wallets.Where(w => w.ApplicationUserId == userId).Select(w => w.Id).ToList();
+
+            IQueryable<Transaction> query;
+            Transaction[] transactions;
+
+            switch (direction)
+            {
+                case Direction.Inbound:
+                    query = context.Transactions.Where(t => walletIds.Contains(t.SourceWalletId));
+                    transactions = query.OrderByDescending(x => x.Date)
+                        .Skip((pageNumber - 1) * itemsPerPage).Take(itemsPerPage).ToArray();
+                    break;
+
+                case Direction.Outbound:
+                    query = context.Transactions.Where(t => walletIds.Contains(t.DestinationWalletId));
+                    transactions = query.OrderByDescending(x => x.Date)
+                        .Skip((pageNumber - 1) * itemsPerPage).Take(itemsPerPage).ToArray();
+                    break;
+                case Direction.None:
+                default:
+                    query = context.Transactions.Where(t =>
+                        walletIds.Contains(t.DestinationWalletId) || walletIds.Contains(t.SourceWalletId));
+                    transactions = query.OrderByDescending(x => x.Date)
+                        .Skip((pageNumber - 1) * itemsPerPage).Take(itemsPerPage).ToArray();
+                    break;
+            }
+
+            var transactionsData = new TransactionsHistoryData
+            {
+                Transactions = transactions.Select(DomainMapper.ToDto).ToArray(),
+                ItemCount = query.Count()
+            };
+            
+            return transactionsData;
         }
     }
 }
