@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using BlazorApp3.Server.Data;
+using BlazorApp3.Server.Helpers;
 using BlazorApp3.Server.Models;
 using BlazorApp3.Shared;
 using Microsoft.AspNetCore.Authorization;
@@ -47,7 +50,7 @@ namespace BlazorApp3.Server.Controllers
         [HttpPost]
         public IActionResult CreateWallet([FromQuery] string currency)
         {
-            if (CurrencyManager.Currencies.Contains(currency))
+            if (!CurrencyManager.Currencies.Contains(currency))
             {
                 return BadRequest();
             }
@@ -147,6 +150,47 @@ namespace BlazorApp3.Server.Controllers
             context.SaveChanges();
 
             return Ok();
+        }
+        [HttpGet]
+        [Route("transferHistory/{limit}/{page}/{direction}")]
+        public async Task<TransactionsHistoryData> GetTransferHistory(int limit, int page, Direction direction = Direction.None)
+        {
+            var userId = userManager.GetUserId(User);
+            
+            var user1 = await userManager.GetUserAsync(User);
+            context.Entry(user1).Collection(u => u.Wallets).Load();
+            var wallets = user1.Wallets;
+            //var user = context.Users.Include(u => u.Wallets).Where(x => x.Id == userId).FirstOrDefault();
+            //var walletIds = user.Wallets.Select(w => w.Id);
+            var walletIds = context.Wallets.Where(w => w.ApplicationUserId == userId).Select(w => w.Id).ToList();
+
+            List<Transaction> transactions;
+            switch (direction)
+            {
+                case Direction.Inbound:
+                    transactions = context.Transactions.Where(t => walletIds.Contains(t.DestinationWalletId))
+                        .Skip((page - 1) * limit).Take(limit).ToList();
+                    break;
+                case Direction.Outbound:
+                    transactions = context.Transactions.Where(t => walletIds.Contains(t.SourceWalletId))
+                        .Skip((page - 1) * limit).Take(limit).ToList();
+                    break;
+                case Direction.None:
+                default:
+                    transactions = context.Transactions.Where(t =>
+                        walletIds.Contains(t.SourceWalletId) || walletIds.Contains(t.DestinationWalletId))
+                        .Skip((page - 1) * limit).Take(limit).ToList();
+                    break;
+            }
+
+            var transactionsData = new TransactionsHistoryData
+            {
+                Transactions = transactions.Select(DomainMapper.ToDto).ToArray(),
+                Count = context.Transactions.Where(t =>
+                walletIds.Contains(t.SourceWalletId) || walletIds.Contains(t.DestinationWalletId)).Count()
+            };
+
+            return transactionsData;
         }
     }
 }

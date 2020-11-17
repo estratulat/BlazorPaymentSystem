@@ -6,6 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Data\Migrations\20201116151102_RepairWallet.cs" />
+    <Compile Remove="Data\Migrations\20201116151102_RepairWallet.Designer.cs" />
+    <Compile Remove="Data\Migrations\20201116151732_RepairWallet.cs" />
+    <Compile Remove="Data\Migrations\20201116151732_RepairWallet.Designer.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="3.2.1" />
   </ItemGroup>
 
