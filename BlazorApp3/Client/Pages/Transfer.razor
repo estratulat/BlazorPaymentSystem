@@ -103,10 +103,7 @@ else
         try
         {
             var response = await HttpClient.PostAsJsonAsync($"api/wallet/transfer", transferData);
-            if (response.IsSuccessStatusCode)
-            {
-                navManager.NavigateTo("wallets");
-            }
+            navManager.NavigateTo($"wallets?transferSuccess={response.IsSuccessStatusCode}");
         }
         catch (AccessTokenNotAvailableException exception)
         {
