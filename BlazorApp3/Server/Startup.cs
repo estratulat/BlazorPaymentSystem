@@ -15,6 +15,7 @@ using BlazorApp3.Server.Data;
 using BlazorApp3.Server.Models;
 using System.Security.Claims;
 using MediatR;
+using BlazorApp3.Server.Middleware;
 
 namespace BlazorApp3.Server
 {
@@ -49,6 +50,8 @@ namespace BlazorApp3.Server
 
             services.AddMediatR(typeof(Startup));
 
+            services.AddTransient<ExceptionHandlingMiddleware>();
+
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
@@ -78,6 +81,8 @@ namespace BlazorApp3.Server
             app.UseIdentityServer();
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
 
             app.UseEndpoints(endpoints =>
             {

@@ -111,6 +111,10 @@ namespace BlazorApp3.Server.Controllers
             }
 
             var destinationUser = context.Users.Include(x => x.Wallets).FirstOrDefault(x => x.UserName == data.Username);
+            if(destinationUser == null)
+            {
+                throw new NotFoundException();
+            }
 
             var destination = destinationUser.Wallets.FirstOrDefault(x => x.Currency == data.Currency);
 
