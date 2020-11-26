@@ -16,6 +16,7 @@ using BlazorApp3.Server.Models;
 using System.Security.Claims;
 using MediatR;
 using BlazorApp3.Server.Middleware;
+using BlazorApp3.Server.Application.Promotion;
 
 namespace BlazorApp3.Server
 {
@@ -49,6 +50,8 @@ namespace BlazorApp3.Server
                 options.ClaimsIdentity.UserIdClaimType = ClaimTypes.NameIdentifier);
 
             services.AddMediatR(typeof(Startup));
+
+            services.AddSingleton<IPromotionManager, PromotionManager>();
 
             services.AddTransient<ExceptionHandlingMiddleware>();
 
