@@ -13,7 +13,8 @@ namespace BlazorApp3.Server
                 "EUR",
                 "USD",
                 "MDL",
-                "EC"
+                "EC",
+                "BTC"
             };
         }
     }
